@@ -1,0 +1,254 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'">
+<title>Secure Vault</title>
+<!-- SECURE VAULT: single-file build. For Capacitor split: <style> -> css/style.css; JS blocks marked /*== name ==*/ -> js/crypto.js, storage.js, biometric.js, auth.js, search.js, app.js (load as ES modules). -->
+<style>
+:root{--bg:#eceff1;--c:#fff;--t:#10202a;--m:#66808c;--a:#0b7a70;--l:#e3e9ec;--r:#d23b3b;--ok:#15803d;--sh:0 1px 2px #10202a0d,0 8px 20px #10202a10}
+[data-t=dark]{--bg:#071014;--c:#0f1a21;--t:#e9f1f5;--m:#869ba8;--l:#1b2a34;--a:#2dd4bf;--ok:#4ade80;--sh:0 0 0 1px #ffffff0e}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+body{font:15px/1.45 "Avenir Next","Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--t);padding-top:env(safe-area-inset-top)}
+#app{max-width:560px;margin:auto;padding:14px 16px calc(120px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font:inherit;color:inherit}button{border:0;background:none;cursor:pointer;transition:transform .12s}
+input,select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--l);border-radius:14px;background:var(--c);outline:0;margin-top:5px;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--a);box-shadow:0 0 0 4px color-mix(in srgb,var(--a) 25%,transparent)}.err{border-color:var(--r)!important}
+label{display:block;margin:12px 0;font-size:13px;font-weight:600;color:var(--m)}label.ck{display:flex;align-items:center;color:var(--t);font-weight:500}.ck input{width:auto;margin:0 10px 0 0}
+small,.m{color:var(--m);font-size:12.5px}h1{font-size:27px;letter-spacing:-.4px;line-height:1.15}h2{font-size:20px;letter-spacing:-.2px}h3{margin:22px 2px 6px;font-size:14px;font-weight:700;color:var(--m)}
+.card,.row,.st{background:var(--c);border-radius:18px;padding:14px;margin:9px 0;box-shadow:var(--sh)}
+.row,.fr,.hd{display:flex;align-items:center;gap:12px}.hd{margin:2px 0 10px}.hd h2{flex:1}
+.row{cursor:pointer;animation:in .22s}.row>div{flex:1;min-width:0}.row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row select{width:auto}.row:active,.st:active,.btn:active{transform:scale(.98)}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.ic{--k:#0b7a70;width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:22px;background:var(--l);background:color-mix(in srgb,var(--k) 16%,var(--c));overflow:hidden}.ic img{width:100%;height:100%;object-fit:cover}.ic.big{width:76px;height:76px;font-size:36px;border-radius:22px;margin:0 auto 10px}
+.t-app{--k:#6366f1}.t-web{--k:#0ea5e9}.t-bank{--k:#d98a00}.t-note{--k:#d6458a}.t-fav{--k:#e0a100}
+.hero{position:relative;overflow:hidden;color:#fff;border-radius:26px;padding:22px 20px 20px;background:linear-gradient(150deg,#06222a,#0b6f68 62%,#17a894);box-shadow:0 14px 30px #0b6f6844}
+.hero:after{content:"";position:absolute;right:-50px;top:-50px;width:190px;height:190px;border-radius:50%;border:30px solid #ffffff12}.hero small{color:#c4ebe5}.hero h1{margin:6px 0 12px;position:relative}
+.pill{display:inline-block;font-size:12px;padding:5px 11px;border-radius:99px;background:#ffffff1f;position:relative}
+.lkb{position:absolute;right:14px;top:14px;z-index:1;width:26px;height:26px;border-radius:8px;background:#ffffff22;font-size:12px;opacity:.7}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.st{margin:0;cursor:pointer;padding:12px}.st .ic{width:36px;height:36px;font-size:18px;border-radius:11px;margin-bottom:8px}.st b{font-size:22px;display:block;line-height:1.1}
+.btn{padding:12px 15px;border-radius:14px;background:var(--l);font-weight:650;text-align:center}.btn.p{background:linear-gradient(135deg,#0b7a70,#12a594);color:#fff;box-shadow:0 6px 16px #0b7a7040}[data-t=dark] .btn.p{background:linear-gradient(135deg,#2dd4bf,#5eead4);color:#04201c;box-shadow:none}.btn.d{color:var(--r)}
+.bt{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.bt .btn{flex:1;min-width:120px}
+.fld{padding:11px 0;border-bottom:1px solid var(--l)}.fld:last-child{border:0}.fr .v{flex:1;word-break:break-all;white-space:pre-wrap;color:var(--t);font-weight:550}a.v{color:var(--a);text-decoration:underline;cursor:pointer}.fr input{margin:0}.fr>button{font-size:17px;padding:4px}
+.seg{display:flex;gap:4px;background:var(--l);border-radius:14px;padding:4px;margin:10px 0}.seg button{flex:1;padding:9px 2px;border-radius:11px;font-size:12.5px;color:var(--m)}.seg .on{background:var(--c);color:var(--t);font-weight:700;box-shadow:var(--sh)}
+.nv{position:fixed;left:12px;right:12px;max-width:536px;margin:auto;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;align-items:flex-end;background:var(--c);border-radius:24px;padding:8px 6px;z-index:5;box-shadow:0 10px 30px #10202a26,0 0 0 1px var(--l)}
+.nv button{flex:1;font-size:11px;font-weight:600;color:var(--m);display:flex;flex-direction:column;align-items:center;gap:1px}.nv .on{color:var(--a)}.nv span{font-size:20px}
+.nv .ad span{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;margin-top:-26px;background:linear-gradient(135deg,#0b7a70,#12a594);color:#fff;font-size:26px;box-shadow:0 8px 18px #0b7a7066,0 0 0 5px var(--c)}
+.ov{position:fixed;inset:0;background:#040c1099;backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.md{background:var(--c);width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;animation:up .24s}.md:before{content:"";display:block;width:38px;height:4px;border-radius:4px;background:var(--l);margin:-10px auto 14px}@keyframes up{from{transform:translateY(40px);opacity:0}}
+.gout{font:600 18px ui-monospace,Menlo,monospace;word-break:break-all;background:var(--l);border-radius:14px;padding:14px;margin:10px 0}
+#ts{position:fixed;left:50%;bottom:112px;transform:translate(-50%,20px);background:#10202a;color:#fff;padding:11px 18px;border-radius:99px;opacity:0;transition:.25s;z-index:60;max-width:90vw;text-align:center;pointer-events:none;font-weight:600;box-shadow:0 8px 24px #0006}#ts.on{opacity:1;transform:translate(-50%,0)}
+#lk{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 50% -10%,#14867b,#06222a 60%,#040f14);color:#fff;display:grid;place-items:center;overflow:auto;padding:20px}
+.lw{width:min(330px,100%);text-align:center}.lw>div:first-child{width:78px;height:78px;margin:0 auto 14px;border-radius:26px;display:grid;place-items:center;background:#ffffff18;box-shadow:inset 0 0 0 1px #ffffff2a}.lw .m{color:#b9d9d4;margin:8px 0;min-height:20px}.lw input{margin:6px 0;color:var(--t);text-align:center;font-size:18px}.lw .btn{width:100%;margin-top:10px}
+.dots{font-size:22px;letter-spacing:14px;margin:18px 0 22px;padding-left:14px}.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;justify-items:center}.pad button{width:72px;height:72px;font-size:25px;font-weight:500;border-radius:50%;background:#ffffff14;color:#fff;box-shadow:inset 0 0 0 1px #ffffff1f}.pad button:active{background:#ffffff33;transform:scale(.94)}
+.fr>button:not(.btn){width:34px;height:34px;border-radius:10px;background:var(--l);font-size:15px;padding:0;flex:none}
+.dots{display:flex;justify-content:center;gap:16px;letter-spacing:0;padding:0;margin:16px 0 24px}.dots i{width:14px;height:14px;border-radius:50%;border:2px solid #ffffff66;transition:.15s}.dots i.f{background:#fff;border-color:#fff;transform:scale(1.15)}
+.nv button:not(.ad) span{display:grid;place-items:center;width:46px;height:30px;border-radius:15px;transition:background .15s}.nv button:not(.ad).on span{background:var(--l)}
+.grp{background:var(--c);border-radius:18px;overflow:hidden;box-shadow:var(--sh);margin:6px 0 14px}.grp .row{box-shadow:none;border-radius:0;margin:0;border-bottom:1px solid var(--l);animation:none}.grp .row:last-child{border:0}.grp .row>div{font-weight:600}.row select{margin:0}
+.dh{text-align:center;padding:4px 0 10px}.dh h2{font-size:22px}.empty{text-align:center;padding:28px 16px}.empty .e{font-size:40px;margin-bottom:4px}
+[data-t=dark]{color-scheme:dark}[data-t=dark] #ts{background:#e9f1f5;color:#071014}[data-t=dark] .hero{box-shadow:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div id="app"></div>
+<nav class="nv" hidden><button data-a="tab" data-tab="home"><span>🏠</span>Home</button><button data-a="tab" data-tab="search"><span>🔍</span>Search</button><button data-a="tab" data-tab="favs"><span>⭐</span>Favorites</button><button class="ad" data-a="add"><span>＋</span>Add</button><button data-a="tab" data-tab="settings"><span>⚙️</span>Settings</button></nav>
+<div id="lk"></div><div id="ts"></div><input type="file" id="fi" hidden><input type="file" id="icf" accept="image/*" hidden>
+<script>
+'use strict';
+/*== utils ==*/
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],E=new TextEncoder(),TD=new TextDecoder();
+const h=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const b64=u=>{let s='';for(const x of u)s+=String.fromCharCode(x);return btoa(s)},ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),rb=n=>crypto.getRandomValues(new Uint8Array(n));
+const fd=t=>new Date(t).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}),ago=t=>{const d=Math.floor((Date.now()-t)/864e5);return d<1?'today':d==1?'yesterday':d+' days ago'};
+// Non-secret UI prefs only (theme, timers). Vault data NEVER goes in localStorage.
+const pr=Object.assign({theme:'system',lock:5,clip:30,trash:30,gen:{len:16,u:1,l:1,n:1,s:1}},JSON.parse(localStorage.svp||'{}')),sp=()=>localStorage.svp=JSON.stringify(pr);
+// Theme: System follows the phone's dark mode; Light/Dark force it
+const dq=matchMedia('(prefers-color-scheme:dark)'),applyTheme=()=>{document.documentElement.dataset.t=pr.theme=='system'?(dq.matches?'dark':'light'):pr.theme};applyTheme();dq.addEventListener?.('change',applyTheme);
+/*== crypto: AES-256-GCM, PBKDF2-SHA256. Random vault key K is locked by the PIN ==*/
+const I=25e4,C={
+kdf:async(p,s,i)=>crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:i,hash:'SHA-256'},await crypto.subtle.importKey('raw',E.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']),
+enc:async(k,d)=>{const iv=rb(12);return{iv:b64(iv),ct:b64(new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,d)))}},
+dec:async(k,o)=>new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.iv)},k,ub(o.ct)))};
+const wr=async(raw,s)=>{const x=rb(16);return[b64(x),await C.enc(await C.kdf(s,x,I),raw)]};
+/*== storage: IndexedDB holds only ciphertext + wrapped keys ==*/
+const DB=()=>new Promise((r,j)=>{const q=indexedDB.open('svault',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)}),
+st={get:async k=>{const d=await DB();return new Promise(r=>{d.transaction('kv').objectStore('kv').get(k).onsuccess=e=>r(e.target.result)})},
+set:async(k,v)=>{const d=await DB();return new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r})}};
+/*== biometric bridge: needs Android + capacitor-native-biometric; safely "unavailable" in plain browser ==*/
+const Bio={p:()=>window.Capacitor?.Plugins?.NativeBiometric,
+ok:async()=>{try{return!!Bio.p()&&(await Bio.p().isAvailable()).isAvailable}catch{return false}},
+set:async pw=>{await Bio.p().verifyIdentity({reason:'Enable biometric unlock'});await Bio.p().setCredentials({username:'vault',password:pw,server:'svault'})},
+get:async()=>{await Bio.p().verifyIdentity({reason:'Unlock vault'});return(await Bio.p().getCredentials({server:'svault'})).password},
+clear:async()=>{try{await Bio.p().deleteCredentials({server:'svault'})}catch{}}};
+/*== state & model ==*/
+const PRE=['Instagram','Facebook','Snapchat','WhatsApp','Telegram','X / Twitter','Google','YouTube','LinkedIn','Amazon','Flipkart'];
+const TY={app:{n:'Apps / Social',e:'📱',x:[]},web:{n:'Websites',e:'🌐',x:[]},bank:{n:'Banking',e:'🏦',x:[['holder','Account Holder'],['acct','Account Number',1],['cust','Customer ID',1],['ifsc','IFSC Code'],['branch','Branch Name']]},note:{n:'Secure Notes',e:'📝',x:[]},custom:{n:'Custom',e:'🔑',x:[]}};
+let K,V,M,BA,TAB='home',DI='',FT,PEND,Q='',GT,GP,CT,TT,LM,pin='';const nav=[],VW={},A={};
+const live=()=>V.items.filter(i=>!i.del),gi=id=>V.items.find(i=>i.id==id),cid=()=>nav.at(-1).id,val=(id,k)=>k.split('.').reduce((o,p)=>o?.[p],gi(id));
+const who=i=>i.type=='bank'?(i.x.acct?'A/c ••'+i.x.acct.slice(-4):i.username):i.username||'';
+const lg=(i,a)=>{V.log.unshift({at:Date.now(),id:i.id,t:i.title,w:who(i),a});V.log.length=Math.min(V.log.length,3000)};
+const snap=i=>i.sn.unshift({at:Date.now(),d:JSON.parse(JSON.stringify({title:i.title,username:i.username,password:i.password,url:i.url,notes:i.notes,x:i.x,cf:i.cf}))});
+let sq=Promise.resolve();const save=()=>{const k=K,s=E.encode(JSON.stringify(V));return sq=sq.then(async()=>st.set('vault',await C.enc(k,s))).catch(()=>toast('Save failed'))};
+function toast(m){const t=$('#ts');t.textContent=m;t.classList.add('on');clearTimeout(TT);TT=setTimeout(()=>t.classList.remove('on'),2600)}
+async function copy(t){if(!t)return;try{await navigator.clipboard.writeText(t)}catch{const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove()}
+toast(`Copied · clears in ${pr.clip}s`);clearTimeout(CT);CT=setTimeout(()=>navigator.clipboard?.writeText('').catch(()=>{}),pr.clip*1e3)}
+function gen(o){const S={u:'ABCDEFGHJKLMNPQRSTUVWXYZ',l:'abcdefghijkmnopqrstuvwxyz',n:'23456789',s:'!@#$%^&*()-_=+?'};let a=Object.keys(S).filter(k=>o[k]);if(!a.length)a=['l'];const pool=a.map(k=>S[k]).join(''),
+rnd=n=>{const b=new Uint32Array(1),m=4294967296-4294967296%n;let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=m);return x%n},out=a.map(k=>S[k][rnd(S[k].length)]);
+while(out.length<o.len)out.push(pool[rnd(pool.length)]);for(let i=out.length-1;i>0;i--){const j=rnd(i+1);[out[i],out[j]]=[out[j],out[i]]}return out.join('')}
+/*== UI helpers ==*/
+const ico=(i,b)=>`<div class="ic t-${i.type}${b?' big':''}">${i.icon?`<img src="${h(i.icon)}" alt="">`:TY[i.type].e}</div>`;
+const hd=(t,x='')=>`<div class="hd">${nav.length>1?'<button class="btn" data-a="back">‹</button>':''}<h2>${t}</h2>${x}</div>`;
+const empty=t=>`<div class="card empty"><div class="e">🗝️</div><p><b>No saved accounts yet.</b></p><button class="btn p" style="margin-top:10px" data-a="new" data-t="${TY[t]?t:'app'}">+ Add your first account</button></div>`;
+const row=(i,u)=>`<div class="row" data-a="open" data-id="${i.id}">${ico(i)}<div><b>${h(u?who(i)||i.title:i.title)}</b><small>${h(u?'':who(i))}${i.type!='note'?' ••••••••':''} · ${ago(i.updated)}</small></div>${i.fav?'⭐':''}</div>`;
+const fld=(id,l,k,m)=>{const v=val(id,k);if(!v)return'';const u=k.slice(-3)=='url';return`<div class="fld"><small>${h(l)}</small><div class="fr">${u?`<a class="v" data-a="url" data-id="${id}" data-k="${k}">${h(v)}</a>`:`<span class="v" data-id="${id}" data-k="${k}">${m?'••••••••':h(v)}</span>`}${m?'<button data-a="eye">👁</button>':''}<button data-a="cp" data-id="${id}" data-k="${k}">📋</button></div></div>`};
+// Renders current data (p='') or a snapshot (p='sn.N.d.') with the same layout
+const fields=(i,o,p)=>{const f=(l,k,m)=>fld(i.id,l,p+k,m),b=i.type=='bank';return(i.type=='note'?f('Note','notes',1):f(b?'Internet Banking Username':'Username / ID / Email','username')+f(b?'Internet Banking Password':'Password','password',1))+TY[i.type].x.map(([k,l,m])=>f(l,'x.'+k,m)).join('')+f('URL','url')+(i.type!='note'?f('Notes','notes'):'')+o.cf.map((x,n)=>f(x.k,'cf.'+n+'.v')).join('')};
+function modal(x){const o=document.createElement('div');o.className='ov';o.innerHTML=`<div class="md">${x}</div>`;document.body.append(o)}
+const mc=()=>$$('.ov').pop()?.remove();
+function ask(msg,fl,fn,ok='OK',x=''){PEND=fn;modal(`<h3 style="color:var(--t);font-size:17px">${h(msg)}</h3>${fl.map(p=>`<input class="ai" type="password" autocomplete="off" placeholder="${p}" ${/PIN/.test(p)?'inputmode="numeric" maxlength="4"':''}>`).join('')}<div class="bt"><button class="btn" data-a="mc">Cancel</button>${x}<button class="btn p" data-a="pend">${ok}</button></div>`)}
+/*== views ==*/
+VW.home=()=>{const L=live(),n=t=>L.filter(i=>i.type==t).length,H=new Date().getHours(),
+s=(l,v,t)=>`<div class="st t-${t}" data-a="cat" data-t="${t}"><div class="ic">${TY[t]?TY[t].e:t=='fav'?'⭐':'🗂'}</div><b>${v}</b><small>${l}</small></div>`,
+sec=(t,a)=>a.length?`<h3>${t}</h3>`+a.map(x=>row(x)).join(''):'',q=L.filter(i=>i.quick&&i.type!='note');
+return`<div class="hero"><button class="lkb" data-a="lock" title="Lock now">🔒</button><small>Good ${H<12?'morning':H<18?'afternoon':'evening'}</small><h1>${L.length} item${L.length==1?'':'s'} secured</h1><span class="pill">● Unlocked · AES-256-GCM · offline</span></div>
+<div class="grid">${s('Total Items',L.length,'all')}${s('Apps',n('app'),'app')}${s('Websites',n('web'),'web')}${s('Banking',n('bank'),'bank')}${s('Secure Notes',n('note'),'note')}${s('Favorites',L.filter(i=>i.fav).length,'fav')}</div>
+<button class="btn p" style="width:100%" data-a="add">＋ Add New</button>
+${L.length?`<h3>Quick Copy</h3>`+(q.map(i=>`<div class="card"><div class="fr">${ico(i)}<div style="min-width:0"><b>${h(i.title)} — ${h(who(i))}</b><br><small>••••••••</small></div></div><div class="bt"><button class="btn" data-a="cp" data-id="${i.id}" data-k="username">Copy ${i.type=='bank'?'User ID':'Username'}</button><button class="btn" data-a="cp" data-id="${i.id}" data-k="password">Copy Password</button></div></div>`).join('')||'<small>Open an account and tap “Add to Quick Copy”.</small>'):empty('app')}
+${sec('Recently Used',L.filter(i=>i.used).sort((a,b)=>b.used-a.used).slice(0,4))}${sec('Recently Updated',[...L].sort((a,b)=>b.updated-a.updated).slice(0,4))}`};
+VW.cat=c=>{const t=c.t,L=live().filter(i=>t=='all'||(t=='fav'?i.fav:i.type==t)).sort((a,b)=>a.title.localeCompare(b.title));let b;
+if(['app','web','bank','custom'].includes(t)){const g={};L.forEach(i=>(g[i.title.toLowerCase()]=g[i.title.toLowerCase()]||[]).push(i));
+b=Object.values(g).map(a=>`<div class="row" data-a="svc" data-t="${t}" data-n="${h(a[0].title.toLowerCase())}">${ico(a.find(x=>x.icon)||a[0])}<div><b>${h(a[0].title)}</b><small>${a.length} Account${a.length>1?'s':''}</small></div>›</div>`).join('')}
+else b=L.map(x=>row(x)).join('');
+return hd(t=='fav'?'⭐ Favorites':t=='all'?'All Items':TY[t].n)+(b||empty(t))+(t=='fav'||t=='all'?'':`<button class="btn p" style="width:100%;margin-top:8px" data-a="new" data-t="${t}">＋ Add</button>`)};
+VW.svc=c=>{const L=live().filter(i=>i.type==c.t&&i.title.toLowerCase()==c.n).sort((a,b)=>b.updated-a.updated),f=L[0];
+return hd(h(f?f.title:c.n))+`<small>${L.length} Account${L.length!=1?'s':''}</small>`+L.map(x=>row(x,1)).join('')+`<button class="btn p" style="width:100%;margin-top:8px" data-a="new" data-t="${c.t}" data-n="${h(f?f.title:'')}">＋ Add Account</button>`};
+VW.det=c=>{const i=gi(c.id);if(!i||i.del)return hd('Not found');
+return hd('',`<button data-a="fav" data-id="${i.id}" style="font-size:24px">${i.fav?'⭐':'☆'}</button>`)+`<div class="dh">${ico(i,1)}<h2>${h(i.title)}</h2><small>${TY[i.type].n}</small></div><div class="card">${fields(i,i,'')}</div>
+<div class="bt"><button class="btn" data-a="edit">✏️ Edit</button>${i.type=='note'?'':'<button class="btn p" data-a="upd">🔑 Update Password</button>'}</div>
+<div class="bt">${i.url?`<button class="btn" data-a="url" data-id="${i.id}" data-k="url">🌐 Open Website</button>`:''}<button class="btn" data-a="hist">🕘 View History</button><button class="btn" data-a="quick">${i.quick?'⚡ Remove from Quick Copy':'⚡ Add to Quick Copy'}</button><button class="btn d" data-a="del">🗑 Delete</button></div>`};
+const cfr=(x={k:'',v:''})=>`<div class="fr cf" style="margin:6px 0"><input placeholder="Field name" value="${h(x.k)}"><input placeholder="Value" value="${h(x.v)}"><button class="btn d" data-a="rmcf">✕</button></div>`;
+const ibh=()=>`<div class="ic">${DI?`<img src="${h(DI)}" alt="">`:TY[FT].e}</div><div><button class="btn" data-a="pick">🖼 ${DI?'Change Icon':'Add Custom Icon'}</button>${DI?' <button class="btn d" data-a="rmicon">Restore Default</button>':''}</div>`;
+VW.form=c=>{const e=c.id?gi(c.id):null,t=e?e.type:c.t,T=TY[t],nt=t=='note',v=e||{title:c.title||'',username:'',url:'',notes:'',x:{},cf:[]};FT=t;
+const inp=(id,l,x)=>`<label>${l}<input id="${id}" value="${h(x)}" autocomplete="off"></label>`;
+return hd((e?'Edit · ':'Add · ')+T.n)+(nt?'':`<div class="fr" id="ib" style="margin:10px 0">${ibh()}</div>`)
++`<label>${nt?'Note title':t=='bank'?'Bank Name':t=='web'?'Website Name':t=='app'?'App / Service Name':'Name'} *<input id="f_title" value="${h(v.title)}" list="${t=='app'?'apps':''}"></label><datalist id="apps">${PRE.map(p=>`<option>${p}</option>`).join('')}</datalist>`
++(nt?'':inp('f_user',t=='bank'?'Internet Banking Username':'Username / ID / Email *',v.username))
++(nt||e?'':`<label>Password${t=='bank'?'':' *'}<div class="fr"><input id="f_pw" type="password" autocomplete="off"><button class="btn" data-a="eyei">👁</button><button class="btn" data-a="gen" data-t="f_pw">🎲</button></div></label>`)
++(['app','web','custom'].includes(t)?inp('f_url','URL (optional)',v.url):'')+T.x.map(([k,l])=>inp('x_'+k,l,v.x[k]||'')).join('')
++`<label>${nt?'Note content *':'Notes (optional)'}<textarea id="f_notes" rows="${nt?7:3}">${h(v.notes)}</textarea></label><h3>Custom Fields</h3><div id="cfs">${v.cf.map(cfr).join('')}</div><button class="btn" data-a="addcf">＋ Add Custom Field</button>
+<button class="btn p" style="width:100%;margin-top:16px" data-a="save">Save</button>`};
+VW.hist=c=>{const i=gi(c.id),s=c.s||'tl',nt=i.type=='note',none='<div class="card m">Nothing here yet.</div>';
+const sg=[['tl','Timeline'],...nt?[]:[['pw','Password History']],['sn','Snapshots']].map(([k,l])=>`<button class="${s==k?'on':''}" data-a="seg" data-s="${k}">${l}</button>`).join('');let b='';
+if(s=='tl')b=V.log.filter(x=>x.id==i.id).map(x=>`<div class="card"><b>${h(x.a)}</b>${x.a=='Password Updated'?'<br><small>Previous password → Password History</small>':''}<br><small>${fd(x.at)}</small></div>`).join('')||none;
+if(s=='pw')b=`<div class="card">${fld(i.id,'Current Password','password',1)}</div><h3>Previous Passwords</h3>`+i.hp.map((x,n)=>`<div class="card"><div class="fr"><span class="v" data-id="${i.id}" data-k="hp.${n}.p">••••••••</span><button data-a="eye">👁</button><button data-a="cp" data-id="${i.id}" data-k="hp.${n}.p">📋</button><button data-a="delh" data-n="${n}">🗑</button></div><small>Changed: ${fd(x.at)}</small></div>`).join('')||none;
+if(s=='sn')b='<small>Current Version ↓</small>'+(i.sn.map((x,n)=>`<div class="row" data-a="snap" data-n="${n}"><div><b>${fd(x.at)}</b><small>Tap to view this saved version</small></div>›</div>`).join('')||none);
+return hd(h(i.title)+' · History')+`<small>${h(who(i))}</small><div class="seg">${sg}</div>`+b};
+VW.snp=c=>{const i=gi(c.id),s=i.sn[c.n];return hd('Snapshot')+`<small>Version saved ${fd(s.at)} — not the current data.</small><div class="card"><div class="fld"><small>Name</small><div>${h(s.d.title)}</div></div>${fields(i,s.d,`sn.${c.n}.d.`)}</div>`};
+VW.tl=()=>hd('Vault Timeline')+(V.log.slice(0,300).map(x=>`<div class="card"><b>${h(x.t)}</b> <small>${h(x.w)}</small><div>${h(x.a)}</div><small>${fd(x.at)}</small></div>`).join('')||'<div class="card m">No activity yet.</div>');
+VW.trash=()=>{const L=V.items.filter(i=>i.del).sort((a,b)=>b.del-a.del);return hd('🗑 Recently Deleted')+`<small>${pr.trash?`Deleted automatically after ${pr.trash} days.`:'Automatic cleanup is off.'}</small>`+(L.map(i=>`<div class="card"><div class="fr">${ico(i)}<div style="min-width:0"><b>${h(i.title)}</b><br><small>${TY[i.type].n} · ${h(who(i))}<br>Deleted ${fd(i.del)}</small></div></div><div class="bt"><button class="btn" data-a="rest" data-id="${i.id}">Restore</button><button class="btn d" data-a="purge" data-id="${i.id}">Delete Permanently</button></div></div>`).join('')||'<div class="card m">Trash is empty.</div>')};
+VW.set=()=>{const sel=(k,o)=>`<select data-p="${k}">${o.map(([v,l])=>`<option value="${v}"${pr[k]==v?' selected':''}>${l}</option>`).join('')}</select>`,r=(e,l,x,a)=>`<div class="row"${a?` data-a="${a}"`:''}><span style="font-size:20px">${e}</span><div>${l}</div>${x||'›'}</div>`,g=(t,...a)=>`<h3>${t}</h3><div class="grp">${a.join('')}</div>`;
+return'<h2 style="margin:2px 0 4px">Settings</h2>'+g('Appearance',r('🎨','Theme',sel('theme',[['system','System (auto)'],['light','Light'],['dark','Dark']])))
++g('Security',r('⏱','Auto-lock',sel('lock',[[0,'Immediately'],[1,'1 minute'],[5,'5 minutes'],[15,'15 minutes'],[-1,'Never']])),r('📋','Clipboard auto-clear',sel('clip',[[10,'10 s'],[20,'20 s'],[30,'30 s'],[60,'60 s']])),r('👆','Fingerprint unlock'+(BA?'':'<br><small>Android app only</small>'),BA?`<b>${localStorage.svbio?'ON':'OFF'}</b>`:'',BA?'biot':'fpinfo'),r('🔢','Change PIN','','cpin'),r('🎲','Password Generator','','genm'))
++g('Vault',r('🕘','Vault Timeline','','tl'),r('🗑',`Trash (${V.items.filter(i=>i.del).length})`,'','trash'),r('🧹','Trash auto-cleanup',sel('trash',[[7,'7 days'],[30,'30 days'],[90,'90 days'],[0,'Never']])))
++g('Backup',r('⬆️','Export Backup','','exp'),r('⬇️','Import Backup','','imp'))+g('About',r('ℹ️','About & Security','','about'))};
+/*== search + local-only Vault Intelligence (exact matches in your own data, no inference) ==*/
+const hay=i=>[i.title,i.username,i.password,i.url,i.notes,...Object.values(i.x),...i.cf.flatMap(f=>[f.k,f.v])].join('\n').toLowerCase();
+const ids=i=>[['Username',i.username],...i.cf.map(f=>[f.k,f.v])].filter(a=>a[1]&&a[1].length>2);
+VW.search=()=>`<h2>Search</h2><input id="q" placeholder="🔍 App, username, email, URL, notes, custom fields…" value="${h(Q)}" autocomplete="off"><div id="res"></div>`;
+function sres(){const q=Q.trim().toLowerCase(),o=$('#res');if(!q){o.innerHTML='<p class="m" style="margin:16px 0">Search your whole vault. Case-insensitive, partial match.</p>';return}
+const R=live().filter(i=>hay(i).includes(q)),rel=[],seen={};
+R.forEach(r=>ids(r).forEach(([k,v])=>live().forEach(x=>{if(x!==r&&!R.includes(x))ids(x).forEach(([k2,v2])=>{if(v2.toLowerCase()==v.toLowerCase()&&!seen[x.id+k2]){seen[x.id+k2]=1;rel.push([x,k2,v2])}})})));
+o.innerHTML=(R.map(i=>{const m=i.cf.find(f=>(f.k+' '+f.v).toLowerCase().includes(q));return`<div class="card" data-a="open" data-id="${i.id}" style="cursor:pointer"><div class="fr">${ico(i)}<div style="min-width:0"><b>${h(i.title)}</b><div>${h(who(i))}</div>${i.type!='note'?'<div>••••••••</div>':''}${m?`<small>${h(m.k)}: ${h(m.v)}</small><br>`:''}<small>${TY[i.type].n}${i.type!='note'?` · Password History: ${i.hp.length}`:''} · Updated: ${ago(i.updated)}</small></div></div><div class="bt"><button class="btn" data-a="open" data-id="${i.id}">View Details</button><button class="btn" data-a="hist" data-id="${i.id}">View History</button></div></div>`}).join('')||'<div class="card m">No results.</div>')
++(rel.length?'<h3>Related Information</h3>'+rel.map(([x,k,v])=>`<div class="row" data-a="open" data-id="${x.id}">${ico(x)}<div><b>${h(x.title)}</b><small>${h(k)}: ${h(v)}</small></div></div>`).join(''):'')}
+/*== navigation ==*/
+function render(){const c=nav.at(-1);if(!c||!V)return;$('#app').innerHTML=VW[c.r](c);$$('.nv button').forEach(b=>b.classList.toggle('on',b.dataset.tab==TAB));if(c.r=='search')sres()}
+const go=r=>{nav.push(r);render();scrollTo(0,0)},back=()=>{nav.pop();render()};
+function tab(t){TAB=t;nav.length=0;nav.push(t=='favs'?{r:'cat',t:'fav'}:{r:t=='settings'?'set':t});render();scrollTo(0,0);if(t=='search')$('#q').focus()}
+/*== actions ==*/
+Object.assign(A,{tab:e=>tab(e.dataset.tab),back,mc,lock:()=>lock(),
+cat:e=>go({r:'cat',t:e.dataset.t}),svc:e=>go({r:'svc',t:e.dataset.t,n:e.dataset.n}),
+open:e=>{const i=gi(e.dataset.id);i.used=Date.now();save();go({r:'det',id:i.id})},
+fav:e=>{const i=gi(e.dataset.id);i.fav=i.fav?0:1;save();render()},
+quick:()=>{const i=gi(cid());i.quick=i.quick?0:1;save();render();toast(i.quick?'Added to Quick Copy':'Removed from Quick Copy')},
+eye:e=>{const s=e.parentNode.querySelector('.v');s.dataset.on=s.dataset.on?'':1;s.textContent=s.dataset.on?val(s.dataset.id,s.dataset.k):'••••••••'},
+eyei:e=>{const i=e.parentNode.querySelector('input');i.type=i.type=='password'?'text':'password'},
+cp:e=>copy(val(e.dataset.id,e.dataset.k)),
+url:e=>{const u=val(e.dataset.id,e.dataset.k)||'';if(u)window.open(/^https?:\/\//i.test(u)?u:'https://'+u,'_blank','noopener')},
+add:()=>modal(`<h3 style="color:var(--t);font-size:17px">Add New</h3>${[['app','📱','App / Social'],['web','🌐','Website'],['bank','🏦','Banking'],['note','📝','Secure Note'],['custom','🔑','Custom Entry']].map(([t,e,l])=>`<div class="row" data-a="new" data-t="${t}"><span style="font-size:24px">${e}</span><div><b>${l}</b></div></div>`).join('')}`),
+new:e=>{$$('.ov').forEach(x=>x.remove());DI='';go({r:'form',t:e.dataset.t,title:e.dataset.n||''})},
+edit:()=>{DI=gi(cid()).icon||'';go({r:'form',id:cid()})},
+pick:()=>$('#icf').click(),rmicon:()=>{DI='';$('#ib').innerHTML=ibh()},
+addcf:()=>$('#cfs').insertAdjacentHTML('beforeend',cfr()),rmcf:e=>e.closest('.cf').remove(),
+save:()=>{const c=nav.at(-1),e=c.id?gi(c.id):null,t=e?e.type:c.t,nt=t=='note',g=id=>$('#'+id)?$('#'+id).value.trim():'',pw=$('#f_pw')?$('#f_pw').value:'',
+d={title:g('f_title'),username:g('f_user'),url:g('f_url'),notes:g('f_notes'),x:{},cf:$$('.cf').map(r=>{const[a,b]=r.querySelectorAll('input');return{k:a.value.trim(),v:b.value.trim()}}).filter(x=>x.k||x.v)};
+TY[t].x.forEach(([k])=>d.x[k]=g('x_'+k));
+const bad=[!d.title&&'f_title',!nt&&t!='bank'&&!d.username&&'f_user',!e&&!nt&&t!='bank'&&!pw&&'f_pw',nt&&!d.notes&&'f_notes'].filter(Boolean);$$('.err').forEach(x=>x.classList.remove('err'));
+if(bad.length){bad.forEach(x=>$('#'+x).classList.add('err'));return toast('Please fill the required fields')}
+if(!e){const it={id:crypto.randomUUID(),type:t,...d,password:pw,icon:DI,fav:0,quick:0,created:Date.now(),updated:Date.now(),used:0,hp:[],sn:[],del:0},
+commit=()=>{V.items.push(it);lg(it,'Created');save();toast('Saved');nav.pop();render()},
+ex=d.username&&live().find(o=>o.type==t&&o.title.toLowerCase()==d.title.toLowerCase()&&o.username.toLowerCase()==d.username.toLowerCase());
+return ex?ask('This account may already exist.',[],commit,'Save anyway',`<button class="btn" data-a="openx" data-id="${ex.id}">Open existing</button>`):commit()}
+const ch=[];if(d.username!=e.username)ch.push('Username Updated');if(d.url!=e.url)ch.push('URL Updated');if(d.notes!=e.notes)ch.push(nt?'Note Updated':'Notes Updated');if(d.title!=e.title)ch.push('Name Updated');
+if(JSON.stringify(d.x)!=JSON.stringify(e.x))ch.push('Account Details Updated');if(JSON.stringify(d.cf)!=JSON.stringify(e.cf))ch.push('Custom Field Updated');
+if(ch.length)snap(e);Object.assign(e,d);if(DI!=(e.icon||''))ch.push(DI?'Custom Icon Changed':'Custom Icon Removed');e.icon=DI;
+if(ch.length){e.updated=Date.now();ch.forEach(a=>lg(e,a))}save();toast(ch.length?'Saved':'No changes');nav.pop();render()},
+openx:e=>{$$('.ov').forEach(x=>x.remove());nav.pop();A.open(e)},
+upd:()=>modal(`<h3 style="color:var(--t);font-size:17px">Update Password</h3><small>The current password is kept in Password History.</small><label>New password<div class="fr"><input id="np" type="password" autocomplete="off"><button class="btn" data-a="eyei">👁</button><button class="btn" data-a="gen" data-t="np">🎲</button></div></label><div class="bt"><button class="btn" data-a="mc">Cancel</button><button class="btn p" data-a="updok">Update Password</button></div>`),
+updok:()=>{const i=gi(cid()),p=$('#np').value;if(!p)return toast('Enter the new password');if(p==i.password)return toast('Same as the current password');
+snap(i);i.hp.unshift({p:i.password,at:Date.now()});i.password=p;i.updated=Date.now();lg(i,'Password Updated');save();mc();toast('Password updated and previous password saved to history.');render()},
+hist:e=>go({r:'hist',id:e.dataset.id||cid(),s:'tl'}),seg:e=>{nav.at(-1).s=e.dataset.s;render()},snap:e=>go({r:'snp',id:cid(),n:+e.dataset.n}),
+delh:e=>ask('Delete this history item?',[],()=>{gi(cid()).hp.splice(+e.dataset.n,1);save();render()},'Delete'),
+del:()=>{const i=gi(cid());ask(`Move "${i.title}" to Trash?`,[],()=>{i.del=Date.now();lg(i,'Moved to Trash');save();toast('Moved to Trash');back()},'Delete')},
+rest:e=>{const i=gi(e.dataset.id);i.del=0;lg(i,'Restored from Trash');save();render();toast('Restored')},
+purge:e=>{const id=e.dataset.id;ask('Delete permanently? This cannot be undone.',[],()=>{V.items=V.items.filter(i=>i.id!=id);V.log=V.log.filter(x=>x.id!=id);save();render()},'Delete')},
+tl:()=>go({r:'tl'}),trash:()=>go({r:'trash'}),
+genm:()=>gm(''),gen:e=>gm(e.dataset.t),gnew:()=>gu(),gcp:()=>copy(GP),guse:()=>{$('#'+GT).value=GP;mc();toast('Password inserted')},
+pend:()=>{const v=$$('.ov:last-of-type .ai').map(x=>x.value),f=PEND;PEND=null;mc();f&&f(v)},
+fpinfo:()=>modal(`<h3 style="color:var(--t);font-size:17px">Fingerprint unlock</h3><p class="m">Not available in this browser. A web page cannot read the phone's fingerprint sensor.<br><br>It switches on automatically inside the Android app (APK) built with Capacitor + capacitor-native-biometric. Then open Settings → Fingerprint unlock and enter your PIN once.</p><button class="btn" style="width:100%" data-a="mc">OK</button>`),
+about:()=>modal(`<h3 style="color:var(--t);font-size:17px">About & Security</h3><p class="m">Data is encrypted with AES-256-GCM using a random key locked by your PIN (PBKDF2-SHA256, 250k rounds). Everything stays on this device: no server, analytics or ads.<br><br><b>No recovery.</b> If you forget the PIN, nobody can open the vault — keep an encrypted backup.<br><br>A 4-digit PIN has only 10,000 combinations, so it is weak if someone copies the raw data file. After 5 wrong tries the app waits 1 minute. Fingerprint unlock uses the Android Keystore.</p><button class="btn" style="width:100%" data-a="mc">Close</button>`),
+cpin:()=>ask('Change PIN',['New 4-digit PIN','Confirm PIN'],async([a,b])=>{if(!/^\d{4}$/.test(a)||a!=b)return toast('PINs must match and be 4 digits');const raw=new Uint8Array(await crypto.subtle.exportKey('raw',K));[M.sP,M.wP]=await wr(raw,a);M.iP=I;await st.set('meta',M);localStorage.svf=0;if(localStorage.svbio)await Bio.set(a).catch(()=>{});toast('PIN changed')}),
+biot:()=>{if(localStorage.svbio){Bio.clear();delete localStorage.svbio;render();return toast('Fingerprint unlock off')}
+ask('Enable fingerprint unlock',['Your 4-digit PIN'],async([p])=>{if(!await vm(p))return toast('Wrong PIN');try{await Bio.set(p);localStorage.svbio=1;render();toast('Fingerprint unlock on')}catch{toast('Biometric setup failed')}})},
+exp:()=>ask('Export backup (locked with your PIN)',['Your 4-digit PIN'],async([p])=>{if(!await vm(p))return toast('Wrong PIN');const s=rb(16),o=await C.enc(await C.kdf(p,s,I),E.encode(JSON.stringify(V)));
+// Android WebView: replace this anchor download with Capacitor Filesystem/Share plugin
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({app:'svault',v:1,s:b64(s),i:I,...o})],{type:'application/octet-stream'}));a.download='secure-vault-backup.enc';document.body.append(a);a.click();a.remove();toast('Encrypted backup exported')}),
+imp:()=>$('#fi').click(),
+/* lock screen */
+k:async e=>{const w=+localStorage.svlk-Date.now();if(w>0)return $('#lm').textContent=`Too many wrong tries. Wait ${Math.ceil(w/1e3)}s.`;
+const d=e.dataset.d;if(d=='b')pin=pin.slice(0,-1);else if(pin.length<4)pin+=d;$('#dots').innerHTML=[0,1,2,3].map(x=>`<i class="${x<pin.length?'f':''}"></i>`).join('');
+if(pin.length==4){const p=pin;pin='';$('#lm').textContent='Unlocking…';if(await unlock(p))return;const f=+(localStorage.svf||0)+1;localStorage.svf=f;if(f>=5){localStorage.svf=0;localStorage.svlk=Date.now()+6e4}lockUI('pin',f>=5?'Too many wrong tries. Wait 1 minute.':`Wrong PIN. ${5-f} tries left.`)}},
+biou:async()=>{try{if(!await unlock(await Bio.get()))lockUI('pin','Biometric unlock failed.')}catch{lockUI('pin','Biometric cancelled.')}},
+mk:async()=>{const[c,d]=['s3','s4'].map(i=>$('#'+i).value),m=$('#lm');
+if(!/^\d{4}$/.test(c))return m.textContent='PIN must be exactly 4 digits.';if(c!=d)return m.textContent='PINs do not match.';
+m.textContent='Creating encrypted vault…';const raw=rb(32),[sP,wP]=await wr(raw,c);M={sP,iP:I,wP};await st.set('meta',M);await openV(raw,1)}});
+/*== generator ==*/
+const gu=()=>{GP=gen(pr.gen);$('#go').textContent=GP};
+function gm(t){GT=t;GP=gen(pr.gen);modal(`<h3 style="color:var(--t);font-size:17px">Password Generator</h3><div class="gout" id="go">${h(GP)}</div><label>Length: <b id="gl">${pr.gen.len}</b><input type="range" id="glen" min="6" max="64" value="${pr.gen.len}"></label>${[['u','Uppercase'],['l','Lowercase'],['n','Numbers'],['s','Symbols']].map(([k,l])=>`<label class="ck"><input type="checkbox" data-g="${k}"${pr.gen[k]?' checked':''}>${l}</label>`).join('')}<div class="bt"><button class="btn" data-a="gnew">↻ New</button><button class="btn" data-a="gcp">Copy</button>${t?'<button class="btn p" data-a="guse">Use Password</button>':''}<button class="btn" data-a="mc">Close</button></div>`)}
+/*== icons: resized to 128px JPEG so storage stays small ==*/
+async function icon(f){if(!f)return;try{const b=await createImageBitmap(f),c=document.createElement('canvas'),s=Math.min(b.width,b.height),x=c.getContext('2d');c.width=c.height=128;x.fillStyle='#fff';x.fillRect(0,0,128,128);x.drawImage(b,(b.width-s)/2,(b.height-s)/2,s,s,0,0,128,128);DI=c.toDataURL('image/jpeg',.8);$('#ib').innerHTML=ibh()}catch{toast('Could not read that image')}}
+/*== auth / lock ==*/
+const vm=async p=>{try{await C.dec(await C.kdf(p,ub(M.sP),M.iP),M.wP);return true}catch{return false}};
+async function unlock(s){try{await openV(await C.dec(await C.kdf(s,ub(M.sP),M.iP),M.wP))}catch{return false}localStorage.svf=0;if(M.wM){delete M.sM;delete M.iM;delete M.wM;st.set('meta',M)}return true}
+async function openV(raw,fresh){K=await crypto.subtle.importKey('raw',raw,'AES-GCM',true,['encrypt','decrypt']);V=fresh?{items:[],log:[]}:JSON.parse(TD.decode(await C.dec(K,await st.get('vault'))));if(fresh)await save();
+if(pr.trash)V.items=V.items.filter(i=>!i.del||Date.now()-i.del<pr.trash*864e5);V.log=V.log.filter(x=>gi(x.id));
+$('#lk').hidden=true;$('.nv').hidden=false;tab('home');rst()}
+function lock(){K=V=null;clearTimeout(AT);$$('.ov').forEach(x=>x.remove());$('#app').innerHTML='';lockUI('pin')}
+function lockUI(m,msg=''){LM=m;pin='';$('#lk').hidden=false;$('.nv').hidden=true;$('#app').innerHTML='';
+const body={setup:`<p class="m">Choose a 4-digit PIN. Your data is encrypted on this device with it. A forgotten PIN cannot be recovered.</p><input id="s3" type="password" inputmode="numeric" maxlength="4" placeholder="4-digit PIN"><input id="s4" type="password" inputmode="numeric" maxlength="4" placeholder="Confirm PIN"><button class="btn p" data-a="mk">Create Vault</button>`,
+
+pin:`<div class="dots" id="dots"><i></i><i></i><i></i><i></i></div><div class="pad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(n=>n===''?'<span></span>':`<button data-a="k" data-d="${n==='⌫'?'b':n}">${n}</button>`).join('')}</div>`}[m];
+$('#lk').innerHTML=`<div class="lw"><div style="font-size:42px">🔐</div><h1>${m=='setup'?'Create your vault':'Secure Vault'}</h1><p class="m" id="lm">${h(msg)}</p>${body}${m!='setup'&&BA&&localStorage.svbio?'<button class="btn" data-a="biou">👆 Use Fingerprint</button>':''}</div>`}
+/*== auto-lock ==*/
+let AT;const rst=()=>{clearTimeout(AT);if(V&&pr.lock>0)AT=setTimeout(lock,pr.lock*6e4)};let hid=0;
+['pointerdown','keydown','scroll'].forEach(e=>addEventListener(e,rst,true));
+document.addEventListener('visibilitychange',()=>{if(!V)return;if(document.hidden){hid=Date.now();if(pr.lock==0)lock()}else if(pr.lock>0&&Date.now()-hid>pr.lock*6e4)lock()});
+/*== events ==*/
+document.addEventListener('click',e=>{const t=e.target;if(t.classList.contains('ov'))return t.remove();const a=t.closest('[data-a]');if(a&&A[a.dataset.a])A[a.dataset.a](a)});
+document.addEventListener('input',e=>{const t=e.target;if(t.id=='q'){Q=t.value;sres()}if(t.id=='glen'){pr.gen.len=+t.value;$('#gl').textContent=t.value;sp();gu()}});
+document.addEventListener('change',async e=>{const t=e.target;
+if(t.dataset.p){pr[t.dataset.p]=isNaN(t.value)?t.value:+t.value;sp();applyTheme();rst()}
+if(t.dataset.g){pr.gen[t.dataset.g]=+t.checked;sp();gu()}
+if(t.id=='icf'){icon(t.files[0]);t.value=''}
+if(t.id=='fi'){const f=t.files[0];t.value='';if(!f)return;let b;try{b=JSON.parse(await f.text())}catch{return toast('Not a valid backup file')}
+ask('Restore backup',['PIN of the backup'],async([p])=>{try{const d=JSON.parse(TD.decode(await C.dec(await C.kdf(p,ub(b.s),b.i),b)));if(!Array.isArray(d.items))throw 0;d.log=d.log||[];
+ask(`Replace the current vault with this backup (${d.items.length} items)?`,[],async()=>{V=d;await save();tab('home');toast('Backup restored')},'Restore')}catch{toast('Wrong password or damaged backup')}})}});
+/*== boot ==*/
+(async()=>{applyTheme();BA=await Bio.ok();try{M=await st.get('meta')}catch{return document.body.textContent='Secure storage (IndexedDB) is unavailable.'}lockUI(M?'pin':'setup')})();
+</script></body></html>
